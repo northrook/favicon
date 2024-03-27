@@ -73,6 +73,8 @@ class FaviconBundle extends stdClass
 
         $this->themeColor = is_string( $color ) ? new Hex( $color ) : $color;
 
+        $this->manifest->colors( $this->themeColor );
+
         if ( is_string( $this->source ) ) {
             $this->source = new Path( $this->source );
         }
@@ -162,7 +164,21 @@ class FaviconBundle extends stdClass
             $image->save( $publicRootPath . $name );
         }
 
-        $this->manifest->icons( $this->links() );
+        $icons = [];
+
+        foreach ( self::SIZES as $name => $size ) {
+            if ( ! str_starts_with( $name, 'android-chrome' ) ) {
+                continue;
+            }
+            $icons[] = [
+                'src'   => "/$name",
+                'sizes' => "{$size}x{$size}",
+                'type'  => 'image/png',
+            ];
+        }
+
+        $this->manifest->icons( $icons );
+
 
         $this->notices[ 'manifest.json' ] =
             File::save( $publicRootPath . 'manifest.json', $this->manifest->generate() );
