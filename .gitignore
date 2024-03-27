@@ -1,0 +1,14 @@
+# PHPStorm
+/.idea/
+
+# VSCodeish
+*.code-workspace
+
+# Composer
+/vendor/
+/composer.phar
+composer.lock
+
+# Build data
+/build/
+*.php/
