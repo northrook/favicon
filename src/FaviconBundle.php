@@ -186,8 +186,8 @@ class FaviconBundle extends stdClass
         return  $this->notices;
     }
 
-    public function links() : array {
-        return [
+    public static function links( ?string $themeColor = null ) : array {
+        $links =  [
             [
                 'rel'  => 'apple-touch-icon',
                 'type' => 'image/png',
@@ -218,15 +218,20 @@ class FaviconBundle extends stdClass
                 'href' => '/manifest.json',
             ],
             [
-                'rel'   => 'mask-icon',
-                'href'  => '/safari-pinned-tab.svg',
-                'color' => $this->themeColor,
-            ],
-            [
                 'rel'  => 'shortcut icon',
                 'href' => '/favicon.ico',
             ],
         ];
+
+        if ( $themeColor ) {
+            $links[] = [
+                'rel'  => 'mask-icon',
+                'href' => '/safari-pinned-tab.svg',
+                'color' => $themeColor,
+            ];
+        }
+
+        return $links;
     }
 
 
