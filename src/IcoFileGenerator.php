@@ -31,9 +31,6 @@ final class IcoFileGenerator
         ],
     ) {
 
-
-        dump( $source );
-
         $this->preflight = class_exists( GdImage::class );
 
         if ( !$this->preflight ) {
@@ -79,7 +76,6 @@ final class IcoFileGenerator
             return false;
         }
 
-        dump( $image );
         if ( empty( $sizes ) ) {
             $sizes = [ imagesx( $image ), imagesy( $image ) ];
         }
@@ -148,8 +144,6 @@ final class IcoFileGenerator
 
     /**
      * Generate the final ICO data by creating a file header and adding the image data.
-     *
-     * @access private
      */
     private function getIcoData() : bool | string {
 
@@ -197,10 +191,10 @@ final class IcoFileGenerator
      * Take a GD image resource and change it into a raw BMP format.
      *
      */
-    private function addImageData( $im ) : void {
-        $width  = imagesx( $im );
-        $height = imagesy( $im );
+    private function addImageData( GdImage $image ) : void {
 
+        $width  = imagesx( $image );
+        $height = imagesy( $image );
 
         $pixel_data = [];
 
@@ -209,7 +203,7 @@ final class IcoFileGenerator
 
         for ( $y = $height - 1; $y >= 0; $y-- ) {
             for ( $x = 0; $x < $width; $x++ ) {
-                $color = imagecolorat( $im, $x, $y );
+                $color = imagecolorat( $image, $x, $y );
 
                 $alpha = ( $color & 0x7F000000 ) >> 24;
                 //$alpha = ( 1 - ( $alpha / 127 ) ) * 255;
@@ -257,7 +251,7 @@ final class IcoFileGenerator
         }
 
 
-        $image = [
+        $layer = [
             'width'                => $width,
             'height'               => $height,
             'color_palette_colors' => 0,
@@ -266,19 +260,22 @@ final class IcoFileGenerator
             'data'                 => $data,
         ];
 
-        $this->images[] = $image;
+        $this->images[] = $layer;
     }
 
 
     /**
      * Read in the source image file and convert it into a {@see GdImage} resource.
+     *
+     * @param string  $path  Path to the source image file.
+     *
+     * @return GdImage|false Resource on success and false on failure.
      */
-    private function loadSourceImage( string $file ) : GdImage | false {
+    private function loadSourceImage( string $path ) : GdImage | false {
 
-        dump( $file );
-        // Run a cheap check to verify that it is an image file.
-        if ( false === getimagesize( $file ) ||
-             false === ( $contents = file_get_contents( $file ) )
+        // Ensure that the file exists and that the file is an image.
+        if ( false === getimagesize( $path ) ||
+             false === ( $contents = file_get_contents( $path ) )
         ) {
             return false;
         }

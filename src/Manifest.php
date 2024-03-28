@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Northrook\Favicon;
 
-use Northrook\Favicon\FaviconBundle;
 use Northrook\Favicon\Manifest\Display;
 use Northrook\Types\Color\Hex;
-use function json_encode;
 
 // todo: https://web.dev/articles/window-controls-overlay
 
@@ -90,11 +88,7 @@ final class Manifest
 
         $this->manifest = array_filter( $this->manifest );
 
-        $json = json_encode( $this->manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES );
-
-        // dd( $this->manifest, $json );
-
-        return $json;
+        return json_encode( $this->manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES );
     }
 
     private function decode( null | array | string $value ) : ?array {
