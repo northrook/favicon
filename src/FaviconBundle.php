@@ -10,11 +10,10 @@ use Intervention\Image\ImageManager;
 use Northrook\Logger\Log;
 use Northrook\Support\File;
 use Northrook\Types\Path;
-use stdClass;
 use SVG\SVG;
 
 
-class FaviconBundle extends stdClass {
+class FaviconBundle {
 
     public const SIZES = [
         'favicon-16x16.png'            => 16,
@@ -51,8 +50,8 @@ class FaviconBundle extends stdClass {
     private Image                    $icon;
 
     /**
-     * @param SVG|Path|string $source Provide a pre-typed {@see SVG} or {@see Path} or a string path to an SVG or PNG file.
-     * @param ?Manifest       $manifest
+     * @param null |SVG|Path|string $source Provide a pre-typed {@see SVG} or {@see Path} or a string path to an SVG or PNG file.
+     * @param ?Manifest             $manifest
      */
     public function __construct(
         null | SVG | Path | string $source = null,
@@ -80,7 +79,7 @@ class FaviconBundle extends stdClass {
 
             if ( ! str_contains( mime_content_type( $source->value ), 'image/' ) ) {
                 $this->notices = [ 'The provided source image must be an image.' ];
-                Log::Error( '{source} is not an image.', [ 'source' => $this->source ] );
+                Log::Error( '{source} is not an image.', [ 'source' => $source ] );
                 return;
             }
 
