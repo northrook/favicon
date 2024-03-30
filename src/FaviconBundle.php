@@ -55,15 +55,17 @@ class FaviconBundle extends stdClass {
      * @param ?Manifest       $manifest
      */
     public function __construct(
-        SVG | Path | string $source,
+        null | SVG | Path | string $source = null,
         ?Manifest $manifest = null
     ) {
-        $this->bundle( $source );
+        if ( $source ) {
+            $this->load( $source );
+        }
 
         $this->manifest = $manifest ?? new Manifest();
     }
 
-    private function bundle( SVG | Path | string $source ) : void {
+    public function load( SVG | Path | string $source ) : void {
 
         if ( $source instanceof SVG ) {
             $this->svg = $source;
