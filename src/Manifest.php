@@ -29,6 +29,10 @@ final class Manifest {
 
     public string $source = '?source=pwa';
 
+    public function __get( string $name ) : mixed {
+        return $this->manifest[ $name ] ?? null;
+    }
+
     public function __set( string $name, $value ) : void {
         $name = match ( $name ) {
             'title'      => 'short_name',
@@ -39,14 +43,6 @@ final class Manifest {
         if ( array_key_exists( $name, $this->manifest ) ) {
             $this->manifest[ $name ] = $value;
         }
-    }
-
-    public function __get( string $name ) : mixed {
-        return $this->manifest[ $name ] ?? null;
-    }
-
-    public function __isset( string $name ) : bool {
-        return isset( $this->manifest[ $name ] );
     }
 
     public function __construct(
@@ -65,6 +61,16 @@ final class Manifest {
             'shortcuts'        => [],
         ]
     ) {}
+
+    public function __isset( string $name ) : bool {
+        return isset( $this->manifest[ $name ] );
+    }
+
+    public function set(
+        array $manifest
+    ) : void {
+        $this->manifest = array_merge( $this->manifest, $manifest );
+    }
 
     public function application(
         string $id,
