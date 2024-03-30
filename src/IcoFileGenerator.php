@@ -59,18 +59,18 @@ final class IcoFileGenerator
      * different sized images in the resulting ICO file. For instance, a small source image can be used for the small
      * resolutions while a larger source image can be used for large resolutions.
      *
-     * @param GdImage|string  $image  Path to the source image file.
+     * @param GdImage|string  $source  Path to the source image file.
      * @param array           $sizes  Optional. An array of sizes (each size is an array with a width and height) that the source image should be rendered at in the generated ICO file. If sizes are not supplied, the size of the source image will be used.
      *
      * @return boolean true on success and false on failure.
      */
-    public function add( GdImage | string $image, array $sizes = [] ) : bool {
+    public function add( GdImage | string $source, array $sizes = [] ) : bool {
 
         if ( !$this->preflight ) {
             return false;
         }
 
-        $image = ( $image instanceof GdImage ) ? $image : $this->loadSourceImage( $image );
+        $image = ( $source instanceof GdImage ) ? $source : $this->loadSourceImage( $source );
 
         if ( !$image ) {
             return false;
@@ -128,7 +128,7 @@ final class IcoFileGenerator
             return false;
         }
 
-        if ( false === ( $fh = fopen( $path, 'w' ) ) ) {
+        if ( false === ( $fh = fopen( $path, 'wb' ) ) ) {
             return false;
         }
 
@@ -219,7 +219,7 @@ final class IcoFileGenerator
 
                 $current_opacity_val = ( $current_opacity_val << 1 ) | $opacity;
 
-                if ( ( ( $x + 1 ) % 32 ) == 0 ) {
+                if ( ( $x + 1 ) % 32 === 0 ) {
                     $opacity_data[]      = $current_opacity_val;
                     $current_opacity_val = 0;
                 }
@@ -227,7 +227,7 @@ final class IcoFileGenerator
 
             if ( ( $x % 32 ) > 0 ) {
                 while ( ( $x++ % 32 ) > 0 ) {
-                    $current_opacity_val = $current_opacity_val << 1;
+                    $current_opacity_val <<= 1;
                 }
 
                 $opacity_data[]      = $current_opacity_val;

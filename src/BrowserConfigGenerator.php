@@ -10,19 +10,19 @@ use Northrook\Logger\Log;
 use Northrook\Types\Color\Hex;
 use Stringable;
 
-final class BrowserConfigGenerator implements Stringable
-{
+final class BrowserConfigGenerator implements Stringable {
+
     private readonly DOMDocument $browserConfig;
 
     /**
-     * @param Hex|string  $tileColor  Hex
-     * @param array       $icons      [ 'localName' => 'iconPath.png')
-     * @param string      $dir        Relative to public root
+     * @param Hex|string $tileColor Hex
+     * @param array      $icons     [ 'localName' => 'iconPath.png')
+     * @param string     $dir       Relative to public root
      */
     public function __construct(
         Hex | string $tileColor,
-        array        $icons = [],
-        string       $dir = '/',
+        array $icons = [],
+        string $dir = '/',
     ) {
         $this->browserConfig = new DOMDocument( '1.0', 'UTF-8' );
 
@@ -54,21 +54,20 @@ final class BrowserConfigGenerator implements Stringable
     /**
      * Exception wrapper for {@see DOMDocument::createElement}.
      *
-     * @param string  $localName
-     * @param string  $value
+     * @param string $localName
+     * @param string $value
      *
-     * @return null|DOMElement
+     * @return false|DOMElement
      */
     private function element( string $localName, string $value = '' ) : ?DOMElement {
         try {
             return $this->browserConfig->createElement( $localName, $value );
-        }
-        catch ( DOMException $exception ) {
+        } catch ( DOMException $exception ) {
             Log::Error(
                 message : 'Unable to create {name} element.',
                 context : [ 'name' => $localName, 'exception' => $exception, ],
             );
-            return null;
+            return false;
         }
     }
 

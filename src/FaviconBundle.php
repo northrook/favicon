@@ -3,19 +3,18 @@
 namespace Northrook\Favicon;
 
 use GdImage;
+use Intervention\Image\Drivers\Gd\Decoders\FilePathImageDecoder;
 use Intervention\Image\Drivers\Gd\Decoders\GdImageDecoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
 use Northrook\Logger\Log;
 use Northrook\Support\File;
-use Northrook\Types\Color\Hex;
 use Northrook\Types\Path;
 use stdClass;
 use SVG\SVG;
 
 
-class FaviconBundle extends stdClass
-{
+class FaviconBundle extends stdClass {
 
     public const SIZES = [
         'favicon-16x16.png'            => 16,
@@ -45,60 +44,75 @@ class FaviconBundle extends stdClass
         'apple-touch-icon-152x152.png' => 152,
         'apple-touch-icon-180x180.png' => 180,
     ];
-
-    private array                    $notices = [];
-    public ?Hex                      $themeColor;
-    public ?SVG                      $svg;
-    public readonly IcoFileGenerator $ico;
+    public ?SVG                      $svg     = null;
+    public readonly IcoFileGenerator $favicon;
     public readonly Manifest         $manifest;
-
-    private Image   $image;
-    private GdImage $masterCache;
+    private array                    $notices = [];
+    private Image                    $icon;
 
     /**
-     * @param Path|string  $source  Ideally an SVG or PNG file. If no SVG is provided here, please add one via {@see FaviconBundle::add()}
-     * @param Manifest     $manifest
-     * @param Hex|string   $color
+     * @param SVG|Path|string $source Provide a pre-typed {@see SVG} or {@see Path} or a string path to an SVG or PNG file.
+     * @param ?Manifest       $manifest
      */
     public function __construct(
-        private Path | string $source,
-        Manifest              $manifest,
-        Hex | string          $color,
+        SVG | Path | string $source,
+        ?Manifest $manifest = null
     ) {
+        $this->bundle( $source );
 
-        $this->manifest = $manifest;
+        $this->manifest = $manifest ?? new Manifest();
+    }
 
-        $this->themeColor = is_string( $color ) ? new Hex( $color ) : $color;
+    private function bundle( SVG | Path | string $source ) : void {
 
-        $this->manifest->colors( $this->themeColor );
+        if ( $source instanceof SVG ) {
+            $this->svg = $source;
+        }
+        else {
+            $source = is_string( $source ) ? new Path( $source ) : $source;
 
-        if ( is_string( $this->source ) ) {
-            $this->source = new Path( $this->source );
+            if ( ! $source->exists ) {
+                Log::Error( '{source} is not a valid file.', [ 'source' => $source ] );
+                return;
+            }
+
+            if ( ! str_contains( mime_content_type( $source->value ), 'image/' ) ) {
+                $this->notices = [ 'The provided source image must be an image.' ];
+                Log::Error( '{source} is not an image.', [ 'source' => $this->source ] );
+                return;
+            }
+
+            if ( $source->extension === 'svg' ) {
+                $this->svg = SVG::fromFile( $source->value );
+            }
         }
 
-        if ( !$this->source->exists ) {
-            Log::Error( '{source} is not a valid file.', [ 'source' => $this->source ] );
-            return;
-        };
-
-        if ( !in_array( $this->source->extension, [ 'svg', 'png' ] ) ) {
-            $this->notices[] = 'The provided source image should be a SVG or PNG file.';
-        };
-
-        if ( !str_contains( mime_content_type( $this->source->value ), 'image/' ) ) {
-            $this->notices = [ 'The provided source image must be an image.' ];
-            Log::Error( '{source} is not an image.', [ 'source' => $this->source ] );
-            return;
-        };
-
-        if ( 'svg' == $this->source->extension ) {
-            $this->notices[]   = 'The provided source is a vector file. A PNG version has been generated.';
-            $this->svg         = SVG::fromFile( $this->source->value );
-            $this->masterCache = $this->svgToPng();
+        if ( ! $this->svg ) {
+            $this->icon = ImageManager::gd()->read( $source->value, FilePathImageDecoder::class );
+        }
+        else {
+            $this->icon = ImageManager::gd()->read( $this->svgResource(), GdImageDecoder::class );
         }
 
-        $this->ico   = new IcoFileGenerator( $this->masterCache );
-        $this->image = ImageManager::gd()->read( $this->masterCache, GdImageDecoder::class );
+        $this->favicon = new IcoFileGenerator( imagecreatefromstring( $this->icon->toPng()->toString() ) );
+
+
+        // $this->icon = ImageManager::gd()->read( $this->resource, GdImageDecoder::class );
+
+        // dump(file_get_contents($source));
+        // $this->resource = $this->svg ? $this->svgResource() : ImageManager::gd()->read( $source->value,  FilePathImageDecoder::class );
+        // $this->ico      = new IcoFileGenerator( $this->resource );
+        // $this->icon     = ImageManager::gd()->read( $this->resource, GdImageDecoder::class );
+    }
+
+    /**
+     * @param int      $width
+     * @param null|int $height
+     *
+     * @return GdImage | resource
+     */
+    public function svgResource( int $width = 512, ?int $height = null ) : GdImage | string {
+        return $this->svg->toRasterImage( $width, $height ?? $width );
     }
 
     /**
@@ -106,7 +120,7 @@ class FaviconBundle extends stdClass
      *
      * * This method does not check if the files were generated by this class.
      *
-     * @param Path|string  $publicRootPath
+     * @param Path|string $publicRootPath
      *
      * @return array
      */
@@ -125,7 +139,7 @@ class FaviconBundle extends stdClass
                 'site.webmanifest', // We don't generate this file, but remove preexisting one prevent duplicates.
                 'browserconfig.xml',
             ],
-            array_keys( self::SIZES ),
+            array_keys( FaviconBundle::SIZES ),
         );
 
         $purged = [];
@@ -135,7 +149,7 @@ class FaviconBundle extends stdClass
                  && File::remove( $publicRootPath . $file )
             ) {
                 $purged[] = $file;
-            };
+            }
         }
 
         return $purged;
@@ -146,7 +160,7 @@ class FaviconBundle extends stdClass
             $publicRootPath = new Path( $publicRootPath );
         }
 
-        if ( !$publicRootPath->isDir ) {
+        if ( ! $publicRootPath->isDir ) {
             $this->notices[] = 'The provided public root path is not a valid directory.';
             Log::Error(
                 '{publicRootPath} is not a directory.', [ 'publicRootPath' => $publicRootPath, ],
@@ -155,10 +169,12 @@ class FaviconBundle extends stdClass
             return $this->notices;
         }
 
-        $this->notices['purge'] = $this->purge( $publicRootPath );
+        $this->notices[ 'purge' ] = $this->purge( $publicRootPath );
 
-        $this->notices[ 'favicon.ico' ] = $this->ico->save( $publicRootPath . 'favicon.ico' );
-        $this->notices[ 'favicon.svg' ] = File::save( $publicRootPath . 'favicon.svg', $this->svg->toXMLString() );
+        $this->notices[ 'favicon.ico' ] = $this->favicon->save( $publicRootPath . 'favicon.ico' );
+        if ( $this->svg ) {
+            $this->notices[ 'favicon.svg' ] = File::save( $publicRootPath . 'favicon.svg', $this->svg->toXMLString() );
+        }
 
         // TODO : Parse the SVG and replace each color with the theme color
         // $safari = $this->svg->toXMLString();
@@ -169,8 +185,8 @@ class FaviconBundle extends stdClass
         $icons = [];
         $tiles = [];
 
-        foreach ( self::SIZES as $name => $size ) {
-            $image  = clone $this->image;
+        foreach ( FaviconBundle::SIZES as $name => $size ) {
+            $image  = clone $this->icon;
             $width  = is_array( $size ) ? $size[ 0 ] : $size;
             $height = is_array( $size ) ? $size[ 1 ] : $size;
             $image->scaleDown( $width, $height );
@@ -180,11 +196,11 @@ class FaviconBundle extends stdClass
             if ( str_starts_with( $name, 'android-chrome' ) ) {
                 $icons[] = [
                     'src'   => "/$name",
-                    'sizes' => "{$size}x{$size}",
+                    'sizes' => "{$size}x$size",
                     'type'  => 'image/png',
                 ];
             }
-            if ( str_starts_with( $name, 'mstile' ) && is_int( $size ) ) {
+            if ( is_int( $size ) && str_starts_with( $name, 'mstile' ) ) {
                 $tiles[ "square{$size}x{$size}logo" ] = $name;
             }
         }
@@ -249,17 +265,6 @@ class FaviconBundle extends stdClass
         }
 
         return $links;
-    }
-
-
-    /**
-     * @param int       $width
-     * @param null|int  $height
-     *
-     * @return GdImage | resource
-     */
-    public function svgToPng( int $width = 512, ?int $height = null ) : GdImage | string {
-        return $this->svg->toRasterImage( $width, $height ?? $width );
     }
 
     public function notices() : array {
