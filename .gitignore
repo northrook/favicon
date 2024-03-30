@@ -11,4 +11,10 @@ composer.lock
 
 # Build data
 /build/
-*.php/
+/*.php
+/*.svg
+/*.ico
+/*.png
+/browserconfig.xml
+/manifest.json
+/site.webmanifest
