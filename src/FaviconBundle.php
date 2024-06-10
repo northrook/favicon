@@ -3,8 +3,8 @@
 namespace Northrook\Favicon;
 
 use GdImage;
+use Intervention\Image\Decoders\NativeObjectDecoder;
 use Intervention\Image\Drivers\Gd\Decoders\FilePathImageDecoder;
-use Intervention\Image\Drivers\Gd\Decoders\GdImageDecoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
 use Northrook\Logger\Log;
@@ -92,7 +92,7 @@ class FaviconBundle {
             $this->icon = ImageManager::gd()->read( $source->value, FilePathImageDecoder::class );
         }
         else {
-            $this->icon = ImageManager::gd()->read( $this->svgResource(), GdImageDecoder::class );
+            $this->icon = ImageManager::gd()->read( $this->svgResource(), NativeObjectDecoder::class );
         }
 
         $this->favicon = new IcoFileGenerator( imagecreatefromstring( $this->icon->toPng()->toString() ) );
@@ -205,7 +205,6 @@ class FaviconBundle {
                 $tiles[ "square{$size}x{$size}logo" ] = $name;
             }
         }
-
 
         $this->manifest->icons( $icons );
 

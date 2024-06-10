@@ -16,11 +16,11 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "php": ">=8.1",
-    "northrook/logger": "*",
-    "northrook/types": "*",
-    "intervention/image": "^3",
-    "symfony/filesystem": "^7",
+    "php": ">=8.2",
+    "northrook/core": "dev-main",
+    "northrook/logger": "dev-main",
+    "northrook/types": "dev-main",
+    "intervention/image": "@stable",
     "meyfa/php-svg": "*",
     "ext-fileinfo": "*",
     "ext-gd": "*",
@@ -28,7 +28,8 @@
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
-    "symfony/var-dumper": "*",
-    "northrook/support": "dev-main"
+    "symfony/deprecation-contracts": "@stable",
+    "symfony/var-dumper": "@stable",
+    "symfony/error-handler": "@stable"
   }
 }

@@ -7,7 +7,6 @@ namespace Northrook\Favicon;
 use JsonException;
 use Northrook\Favicon\Manifest\Display;
 use Northrook\Logger\Log;
-use Northrook\Types\Color\Hex;
 use const JSON_PRETTY_PRINT;
 use const JSON_UNESCAPED_SLASHES;
 
@@ -82,13 +81,14 @@ final class Manifest {
         $this->manifest[ 'scope' ]     = $scope ?? $id;
     }
 
+    // TODO : Use a Color\Hex type when available
     public function colors(
         string $themeColor,
         ?string $backgroundColor = null,
     ) : void {
-        $this->manifest[ 'theme_color' ] = (string) ( new Hex( $themeColor ) );
+        $this->manifest[ 'theme_color' ] = $themeColor;
         if ( $backgroundColor ) {
-            $this->manifest[ 'background_color' ] = (string) ( new Hex( $backgroundColor ) );
+            $this->manifest[ 'background_color' ] = $backgroundColor;
         }
     }
 

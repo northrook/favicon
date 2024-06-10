@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace Northrook\Favicon;
@@ -10,9 +11,9 @@ use Northrook\Logger\Log;
 use Northrook\Types\Color\Hex;
 use Stringable;
 
-final class BrowserConfigGenerator implements Stringable {
+final readonly class BrowserConfigGenerator implements Stringable {
 
-    private readonly DOMDocument $browserConfig;
+    private DOMDocument $browserConfig;
 
     /**
      * @param Hex|string $tileColor Hex
