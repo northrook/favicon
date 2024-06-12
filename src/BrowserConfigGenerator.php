@@ -8,7 +8,6 @@ use DOMDocument;
 use DOMElement;
 use DOMException;
 use Northrook\Logger\Log;
-use Northrook\Types\Color\Hex;
 use Stringable;
 
 final readonly class BrowserConfigGenerator implements Stringable {
@@ -16,12 +15,12 @@ final readonly class BrowserConfigGenerator implements Stringable {
     private DOMDocument $browserConfig;
 
     /**
-     * @param Hex|string $tileColor Hex
-     * @param array      $icons     [ 'localName' => 'iconPath.png')
-     * @param string     $dir       Relative to public root
+     * @param null|string $tileColor Hex
+     * @param array       $icons     [ 'localName' => 'iconPath.png')
+     * @param string      $dir       Relative to public root
      */
     public function __construct(
-        Hex | string $tileColor,
+        ?string $tileColor,
         array $icons = [],
         string $dir = '/',
     ) {
@@ -31,20 +30,16 @@ final readonly class BrowserConfigGenerator implements Stringable {
         $application   = $this->element( 'msapplication' );
         $tile          = $this->element( 'tile' );
 
+        if ( $tileColor ) {
+            $tile->appendChild( $this->element( 'TileColor', $tileColor ) );
+        }
+
         foreach ( $icons as $localName => $iconPath ) {
             $icon = $this->element( $localName );
             $path = $dir . ltrim( $iconPath, '/' );
             $icon->setAttribute( 'src', $path );
-
             $tile->appendChild( $icon );
         }
-
-        $tile->appendChild(
-            $this->element(
-                'TileColor',
-                ( $tileColor instanceof Hex ) ? (string) $tileColor : (string) new Hex( $tileColor ),
-            ),
-        );
 
         $application->appendChild( $tile );
         $browserconfig->appendChild( $application );

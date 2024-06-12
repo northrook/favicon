@@ -17,14 +17,15 @@
   "minimum-stability": "dev",
   "require": {
     "php": ">=8.2",
+    "ext-gd": "*",
+    "ext-dom": "*",
+    "ext-fileinfo": "*",
     "northrook/core": "dev-main",
     "northrook/logger": "dev-main",
     "northrook/types": "dev-main",
+    "symfony/serializer": "@stable",
     "intervention/image": "@stable",
-    "meyfa/php-svg": "*",
-    "ext-fileinfo": "*",
-    "ext-gd": "*",
-    "ext-dom": "*"
+    "meyfa/php-svg": "@stable"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",

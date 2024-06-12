@@ -8,8 +8,8 @@ use GdImage;
 use Northrook\Logger\Log;
 use Symfony\Component\Filesystem\Filesystem;
 
-final class IcoFileGenerator
-{
+final class IcoFileGenerator {
+
     private array $images;
 
     // Ensure prerequisites are met.
@@ -17,23 +17,17 @@ final class IcoFileGenerator
 
 
     /**
-     * @param null|GdImage|string  $source  Optional. Path to the source image file.
-     * @param ?array               $sizes   Optional. An array of sizes (each size is an array with a width and height) that the source image should be rendered at in the generated ICO file. If sizes are not supplied, the size of the source image will be used.
+     * @param null|GdImage|string $source Optional. Path to the source image file.
+     * @param ?array              $sizes  Optional. An array of sizes (each size is an array with a width and height) that the source image should be rendered at in the generated ICO file. If sizes are not supplied, the size of the source image will be used.
      */
     public function __construct(
         GdImage | string | null $source = null,
-        ?array                  $sizes = [
-            [ 16, 16 ],
-            [ 24, 24 ],
-            [ 32, 32 ],
-            // [ 48, 48 ],
-            // [ 64, 64 ],
-        ],
+        ?array $sizes = null,
     ) {
 
         $this->preflight = class_exists( GdImage::class );
 
-        if ( !$this->preflight ) {
+        if ( ! $this->preflight ) {
             Log::Error(
                 "{class} is required to generate {ico} files.
                 Please install the GD PHP extension.
@@ -47,8 +41,45 @@ final class IcoFileGenerator
         }
 
         if ( $source ) {
-            $this->add( $source, $sizes ?? [] );
+            $this->add( $source, $sizes );
         }
+    }
+
+    private function sizes( ?array $sizes = null ) : array {
+
+        $sizes ??= [
+            [ 16, 16 ],
+            [ 24, 24 ],
+            [ 32, 32 ],
+        ];
+
+        foreach ( $sizes as $size => $value ) {
+
+            if ( is_int( $value ) ) {
+                $sizes[ $size ] = [ $value, $value ];
+            }
+            elseif ( is_array( $value ) ) {
+                if ( count( $value ) === 1 && is_int( $value[ 0 ] ) ) {
+                    $sizes[ $size ] = [ $value[ 0 ], $value[ 0 ] ];
+                }
+            }
+            else {
+                throw new \InvalidArgumentException(
+                    'The size array must contain integers or arrays.'
+                );
+            }
+
+            // dd( $value );
+
+            if ( count( $sizes[ $size ] ) !== 2 || ! is_int( $sizes[ $size ][ 0 ] ) || ! is_int( $sizes[ $size ][ 1 ] ) ) {
+                $values = print_r( $sizes, true );
+                throw new \InvalidArgumentException(
+                    'The IcoFileGenerator $sizes array must contain only integers or arrays of two integers.' . "The provided $values is invalid."
+                );
+            }
+        }
+
+        return $sizes;
     }
 
     /**
@@ -59,30 +90,28 @@ final class IcoFileGenerator
      * different sized images in the resulting ICO file. For instance, a small source image can be used for the small
      * resolutions while a larger source image can be used for large resolutions.
      *
-     * @param GdImage|string  $source  Path to the source image file.
-     * @param array           $sizes  Optional. An array of sizes (each size is an array with a width and height) that the source image should be rendered at in the generated ICO file. If sizes are not supplied, the size of the source image will be used.
+     * @param GdImage|string $source Path to the source image file.
+     * @param array          $sizes  Optional. An array of sizes (each size is an array with a width and height) that the source image should be rendered at in the generated ICO file. If sizes are not supplied, the size of the source image will be used.
      *
      * @return boolean true on success and false on failure.
      */
     public function add( GdImage | string $source, array $sizes = [] ) : bool {
 
-        if ( !$this->preflight ) {
+        if ( ! $this->preflight ) {
             return false;
         }
 
         $image = ( $source instanceof GdImage ) ? $source : $this->loadSourceImage( $source );
 
-        if ( !$image ) {
+        if ( ! $image ) {
             return false;
         }
 
         if ( empty( $sizes ) ) {
             $sizes = [ imagesx( $image ), imagesy( $image ) ];
         }
-
-        // If just a single size was passed, put it in array.
-        if ( !is_array( $sizes[ 0 ] ) ) {
-            $sizes = [ $sizes ];
+        else {
+            $sizes = $this->sizes( $sizes );
         }
 
         foreach ( $sizes as $size ) {
@@ -112,7 +141,7 @@ final class IcoFileGenerator
     /**
      * Write the ICO file data to a file path.
      *
-     * @param string  $path  Path to save the ICO file data into.
+     * @param string $path Path to save the ICO file data into.
      *
      * @return boolean true on success and false on failure.
      */
@@ -120,7 +149,7 @@ final class IcoFileGenerator
 
         ( new Filesystem() )->mkdir( dirname( $path ) );
 
-        if ( !$this->preflight ) {
+        if ( ! $this->preflight ) {
             return false;
         }
 
@@ -178,7 +207,7 @@ final class IcoFileGenerator
      *
      */
     public function render() : void {
-        if ( !$this->preflight ) {
+        if ( ! $this->preflight ) {
             return;
         }
 
@@ -201,8 +230,8 @@ final class IcoFileGenerator
         $opacity_data        = [];
         $current_opacity_val = 0;
 
-        for ( $y = $height - 1; $y >= 0; $y-- ) {
-            for ( $x = 0; $x < $width; $x++ ) {
+        for ( $y = $height - 1; $y >= 0; $y -- ) {
+            for ( $x = 0; $x < $width; $x ++ ) {
                 $color = imagecolorat( $image, $x, $y );
 
                 $alpha = ( $color & 0x7F000000 ) >> 24;
@@ -226,7 +255,7 @@ final class IcoFileGenerator
             }
 
             if ( ( $x % 32 ) > 0 ) {
-                while ( ( $x++ % 32 ) > 0 ) {
+                while ( ( $x ++ % 32 ) > 0 ) {
                     $current_opacity_val <<= 1;
                 }
 
@@ -267,7 +296,7 @@ final class IcoFileGenerator
     /**
      * Read in the source image file and convert it into a {@see GdImage} resource.
      *
-     * @param string  $path  Path to the source image file.
+     * @param string $path Path to the source image file.
      *
      * @return GdImage|false Resource on success and false on failure.
      */
